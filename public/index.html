@@ -3,1043 +3,1148 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WARWATCH — Advanced Conflict Monitor</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700;900&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+  <title>WARWATCH · Advanced Conflict Intelligence</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/min/moment.min.js"></script>
   <style>
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(230,57,70,0.5); }
-      50% { opacity: 0.6; transform: scale(1.2); box-shadow: 0 0 0 6px rgba(230,57,70,0); }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg-primary: #0a0c0f;
+      --bg-secondary: #111317;
+      --bg-tertiary: #1a1d24;
+      --border-color: #232831;
+      --text-primary: #e8eef2;
+      --text-secondary: #9aa7b9;
+      --text-dim: #5f6b7a;
+      --accent-red: #f43f5e;
+      --accent-orange: #f97316;
+      --accent-blue: #38bdf8;
+      --accent-green: #4ade80;
+      --accent-purple: #a855f7;
+      --glow-red: rgba(244, 63, 94, 0.3);
     }
-    
-    @keyframes markerPulse {
-      0% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
-      100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      height: 100vh;
+      overflow: hidden;
     }
-    
-    @keyframes scan {
-      0% { top: -2px; }
-      100% { top: 100%; }
-    }
-    
-    @keyframes ticker {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(-50%); }
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateX(-10px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-    
-    @keyframes glow {
-      0%, 100% { text-shadow: 0 0 5px rgba(230,57,70,0.5); }
-      50% { text-shadow: 0 0 20px rgba(230,57,70,0.8); }
-    }
-    
-    .animate-pulse-custom {
-      animation: pulse 1.2s infinite;
-    }
-    
-    .animate-marker-pulse {
-      animation: markerPulse 2s infinite;
-    }
-    
-    .animate-scan {
-      animation: scan 6s linear infinite;
-    }
-    
-    .animate-ticker {
-      animation: ticker 60s linear infinite;
-    }
-    
-    .animate-fade-in {
-      animation: fadeIn 0.5s ease;
-    }
-    
-    .animate-glow {
-      animation: glow 2s infinite;
-    }
-    
-    .news-item {
-      transition: all 0.2s;
-    }
-    .news-item:hover { 
-      background: rgba(255,255,255,0.03);
-      transform: translateX(5px);
-    }
-    
-    ::-webkit-scrollbar { width: 4px; height: 4px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #1e2d3d; border-radius: 2px; }
-    ::-webkit-scrollbar-thumb:hover { background: #e63946; }
-    
-    .clip-path-polygon {
-      clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
-    }
-    
-    .glass-effect {
-      backdrop-filter: blur(10px);
-      background: rgba(13,17,23,0.7);
-    }
-    
-    .chart-container {
-      position: relative;
-      height: 200px;
-      width: 100%;
-    }
-    
-    .modal {
-      display: none;
+    body::before {
+      content: '';
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.8);
-      z-index: 1000;
+      background-image: linear-gradient(rgba(35,40,49,0.3) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(35,40,49,0.3) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: -1;
+    }
+    @keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.8; transform:scale(1.1); } }
+    @keyframes scanLine { 0% { top:-2px; } 100% { top:100%; } }
+    @keyframes tickerMove { 0% { transform:translateX(0); } 100% { transform:translateX(-50%); } }
+    @keyframes slideIn { from { opacity:0; transform:translateX(-20px); } to { opacity:1; transform:translateX(0); } }
+    .animate-pulse { animation: pulse 2s infinite; }
+    .animate-scan { animation: scanLine 8s linear infinite; }
+    .animate-ticker { animation: tickerMove 40s linear infinite; }
+    .animate-slide-in { animation: slideIn 0.3s ease forwards; }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg-tertiary); }
+    ::-webkit-scrollbar-thumb { background: var(--accent-red); border-radius: 2px; }
+    
+    /* Top Bar */
+    .top-bar {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      height: 60px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+    }
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--accent-red), var(--accent-purple));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
       justify-content: center;
+      font-size: 20px;
+      color: white;
+      box-shadow: 0 0 20px var(--glow-red);
+    }
+    .logo-text {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 22px;
+      letter-spacing: 1px;
+      background: linear-gradient(135deg, #fff, var(--accent-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .live-badge {
+      background: var(--accent-red);
+      color: white;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      letter-spacing: 1px;
+      box-shadow: 0 0 15px var(--glow-red);
+    }
+    .stats-row {
+      display: flex;
+      gap: 32px;
+    }
+    .stat-block { text-align: center; }
+    .stat-value {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .stat-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+    .time-display {
+      font-family: 'Share Tech Mono', monospace;
+      background: var(--bg-tertiary);
+      padding: 8px 16px;
+      border-radius: 30px;
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .time-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent-green);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--accent-green);
+    }
+    
+    /* Ticker */
+    .ticker-container {
+      background: rgba(244,63,94,0.05);
+      border-bottom: 1px solid rgba(244,63,94,0.2);
+      height: 32px;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+    }
+    .ticker-label {
+      background: var(--accent-red);
+      color: white;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 0 20px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .ticker-content {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+    .ticker-track {
+      display: flex;
+      white-space: nowrap;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    .ticker-item {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      color: var(--text-secondary);
+      padding: 0 40px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ticker-item i { color: var(--accent-red); font-size: 6px; }
+    
+    /* Main Layout */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 340px 1fr 360px;
+      height: calc(100vh - 92px);
+      overflow: hidden;
+    }
+    
+    /* Panels */
+    .panel {
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .panel:last-child { border-right: none; }
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
       align-items: center;
     }
-    
-    .modal.active {
+    .panel-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
       display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    
-    .modal-content {
-      background: #0d1117;
-      border: 1px solid #1e2d3d;
-      border-radius: 8px;
-      max-width: 800px;
-      width: 90%;
-      max-height: 80vh;
-      overflow-y: auto;
-    }
-    
-    .badge {
-      display: inline-block;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 10px;
+    .panel-title i { color: var(--accent-red); }
+    .panel-badge {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
       font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      padding: 2px 10px;
+      border-radius: 20px;
     }
     
-    .badge-critical { background: rgba(230,57,70,0.2); color: #e63946; }
-    .badge-warning { background: rgba(244,162,97,0.2); color: #f4a261; }
-    .badge-info { background: rgba(0,180,216,0.2); color: #00b4d8; }
-    .badge-success { background: rgba(46,204,113,0.2); color: #2ecc71; }
+    /* Filters */
+    .filter-group {
+      display: flex;
+      gap: 4px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-color);
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-dim);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .filter-btn:hover { border-color: var(--accent-red); color: var(--text-primary); }
+    .filter-btn.active {
+      background: var(--accent-red);
+      border-color: var(--accent-red);
+      color: white;
+      box-shadow: 0 0 15px var(--glow-red);
+    }
     
-    .reliability-high { border-left: 3px solid #2ecc71; }
-    .reliability-medium { border-left: 3px solid #f4a261; }
-    .reliability-low { border-left: 3px solid #e63946; }
-    
-    .tooltip {
+    /* News Feed */
+    .news-feed {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+    .news-item {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
       position: relative;
-      display: inline-block;
+      overflow: hidden;
     }
-    
-    .tooltip:hover .tooltip-text {
-      visibility: visible;
-      opacity: 1;
-    }
-    
-    .tooltip-text {
-      visibility: hidden;
-      opacity: 0;
+    .news-item::before {
+      content: '';
       position: absolute;
-      bottom: 100%;
+      top: 0;
+      left: 0;
+      width: 3px;
+      height: 100%;
+      background: var(--accent-red);
+    }
+    .news-item.critical::before { background: var(--accent-red); }
+    .news-item.warning::before { background: var(--accent-orange); }
+    .news-item.info::before { background: var(--accent-blue); }
+    .news-item:hover {
+      transform: translateX(4px);
+      border-color: var(--accent-red);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .news-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .news-source {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      color: var(--accent-blue);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .news-source i { color: var(--accent-red); font-size: 6px; }
+    .news-time {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      color: var(--text-dim);
+    }
+    .news-title {
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+    .news-tags {
+      display: flex;
+      gap: 6px;
+    }
+    .news-tag {
+      background: rgba(244,63,94,0.1);
+      border: 1px solid rgba(244,63,94,0.2);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 8px;
+      font-family: 'Share Tech Mono', monospace;
+      color: var(--accent-red);
+    }
+    .news-tag.region {
+      background: rgba(56,189,248,0.1);
+      border-color: rgba(56,189,248,0.2);
+      color: var(--accent-blue);
+    }
+    
+    /* Map */
+    .map-container {
+      flex: 1;
+      position: relative;
+      background: var(--bg-primary);
+      overflow: hidden;
+    }
+    .map-grid {
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(rgba(35,40,49,0.5) 1px, transparent 1px),
+                       linear-gradient(90deg, rgba(35,40,49,0.5) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+    .map-scan {
+      position: absolute;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent-blue), transparent);
+      animation: scanLine 6s linear infinite;
+      z-index: 2;
+    }
+    .map-marker {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+      cursor: pointer;
+    }
+    .marker-dot {
+      width: 12px;
+      height: 12px;
+      background: var(--accent-red);
+      border-radius: 50%;
+      box-shadow: 0 0 20px var(--glow-red);
+      position: relative;
+    }
+    .marker-dot::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--accent-red);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    .marker-label {
+      position: absolute;
+      top: 100%;
       left: 50%;
       transform: translateX(-50%);
-      background: #0d1117;
-      border: 1px solid #1e2d3d;
-      padding: 4px 8px;
+      margin-top: 4px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      padding: 2px 6px;
       border-radius: 4px;
-      font-size: 11px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 8px;
       white-space: nowrap;
-      transition: opacity 0.2s;
-      z-index: 100;
+      color: var(--text-secondary);
+    }
+    
+    /* Video Strip */
+    .video-strip {
+      height: 120px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+    }
+    .video-label {
+      width: 40px;
+      background: var(--bg-tertiary);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-family: 'Share Tech Mono', monospace;
+      color: var(--text-dim);
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+    }
+    .video-grid {
+      flex: 1;
+      display: flex;
+      gap: 1px;
+      background: var(--border-color);
+      overflow-x: auto;
+      padding: 2px;
+    }
+    .video-card {
+      min-width: 160px;
+      height: 100%;
+      background: var(--bg-tertiary);
+      position: relative;
+      cursor: pointer;
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+    .video-card:hover { transform: scale(1.02); z-index: 10; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+    .video-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, var(--bg-primary), transparent);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    .video-source {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      color: var(--accent-blue);
+    }
+    .video-title { font-size: 11px; font-weight: 600; line-height: 1.3; }
+    .play-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%,-50%);
+      width: 30px;
+      height: 30px;
+      background: var(--accent-red);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      box-shadow: 0 0 20px var(--glow-red);
+    }
+    .video-card:hover .play-icon { opacity: 1; }
+    
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1px;
+      background: var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+    }
+    .stat-card {
+      background: var(--bg-tertiary);
+      padding: 16px;
+      text-align: center;
+    }
+    .stat-number {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .stat-number.red { color: var(--accent-red); }
+    .stat-number.orange { color: var(--accent-orange); }
+    .stat-number.blue { color: var(--accent-blue); }
+    .stat-number.green { color: var(--accent-green); }
+    .stat-desc {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      color: var(--text-dim);
+    }
+    
+    /* Chart */
+    .chart-container {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .chart-title {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+    .chart-trend {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      color: var(--accent-green);
+    }
+    .chart-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 60px;
+    }
+    .bar {
+      flex: 1;
+      background: var(--accent-red);
+      border-radius: 2px 2px 0 0;
+      transition: height 0.3s ease;
+      opacity: 0.7;
+    }
+    .bar:hover { opacity: 1; }
+    
+    /* Alerts */
+    .alerts-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+    .alert-item {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 8px;
+    }
+    .alert-item.critical { border-left: 3px solid var(--accent-red); background: rgba(244,63,94,0.05); }
+    .alert-item.warning { border-left: 3px solid var(--accent-orange); }
+    .alert-time {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      color: var(--text-dim);
+      margin-bottom: 4px;
+    }
+    .alert-message {
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+    .alert-tag {
+      display: inline-block;
+      background: rgba(244,63,94,0.1);
+      border: 1px solid rgba(244,63,94,0.2);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 8px;
+      color: var(--accent-red);
+    }
+    
+    /* Quick Actions */
+    .quick-actions {
+      display: flex;
+      justify-content: space-around;
+      padding: 12px;
+      border-top: 1px solid var(--border-color);
+    }
+    .action-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .action-btn:hover { background: var(--bg-tertiary); color: var(--accent-red); }
+    
+    /* FAB */
+    .fab {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--accent-red), var(--accent-purple));
+      border: none;
+      border-radius: 16px;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px var(--glow-red);
+      transition: all 0.3s ease;
+      z-index: 1000;
+    }
+    .fab:hover { transform: scale(1.1); box-shadow: 0 8px 30px var(--glow-red); }
+    
+    /* Data sections */
+    .data-section {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .data-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .data-item {
+      background: var(--bg-tertiary);
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 11px;
+    }
+    .data-label {
+      color: var(--text-dim);
+      font-size: 9px;
+      font-family: 'Share Tech Mono', monospace;
+    }
+    .data-value {
+      font-weight: 600;
+      font-size: 13px;
     }
   </style>
 </head>
-<body class="bg-[#080a0e] text-[#c9d1d9] h-screen overflow-hidden flex flex-col" style="font-family: 'Barlow', sans-serif;">
-
-  <!-- TOP BAR -->
-  <div class="bg-[#0d1117] border-b border-[#1e2d3d] h-[52px] px-5 flex items-center justify-between flex-shrink-0 z-50">
-    <div class="flex items-center gap-2.5" style="font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 22px; letter-spacing: 4px;">
-      <div class="w-2.5 h-2.5 bg-[#e63946] rounded-full animate-pulse-custom"></div>
-      <span class="text-white">WARWATCH</span>
-      <span class="bg-[#e63946] text-white font-['Share_Tech_Mono'] text-[10px] px-2 py-[3px] tracking-[2px] clip-path-polygon">LIVE</span>
+<body>
+  <div class="top-bar">
+    <div class="logo-container">
+      <div class="logo-icon"><i class="fas fa-eye"></i></div>
+      <span class="logo-text">WARWATCH</span>
+      <span class="live-badge">LIVE</span>
     </div>
-    
-    <div class="flex gap-6 font-['Share_Tech_Mono'] text-[11px] text-[#556475]">
-      <div class="flex flex-col items-center tooltip">
-        <div class="text-[#e63946] text-sm font-bold" id="eventCount">0</div>
-        <div class="text-[9px] tracking-[1px]">EVENTS</div>
-        <span class="tooltip-text">Total news events today</span>
+    <div class="stats-row">
+      <div class="stat-block">
+        <div class="stat-value" id="eventCount">0</div>
+        <div class="stat-label">EVENTS</div>
       </div>
-      <div class="flex flex-col items-center tooltip">
-        <div class="text-[#f4a261] text-sm font-bold" id="activeZones">0</div>
-        <div class="text-[9px] tracking-[1px]">ZONES</div>
-        <span class="tooltip-text">Active conflict zones</span>
+      <div class="stat-block">
+        <div class="stat-value" style="color: var(--accent-orange);" id="zoneCount">0</div>
+        <div class="stat-label">ZONES</div>
       </div>
-      <div class="flex flex-col items-center tooltip">
-        <div class="text-[#00b4d8] text-sm font-bold" id="sources">0</div>
-        <div class="text-[9px] tracking-[1px]">SOURCES</div>
-        <span class="tooltip-text">Active news sources</span>
+      <div class="stat-block">
+        <div class="stat-value" style="color: var(--accent-blue);" id="aircraftCount">0</div>
+        <div class="stat-label">AIRCRAFT</div>
       </div>
-      <div class="flex flex-col items-center tooltip">
-        <div class="text-[#2ecc71] text-sm font-bold" id="uptime">100%</div>
-        <div class="text-[9px] tracking-[1px]">RELIABLE</div>
-        <span class="tooltip-text">Average source reliability</span>
+      <div class="stat-block">
+        <div class="stat-value" style="color: var(--accent-green);" id="vesselCount">0</div>
+        <div class="stat-label">VESSELS</div>
       </div>
     </div>
-    
-    <div class="flex items-center gap-4 font-['Share_Tech_Mono'] text-[11px]">
-      <span id="clock" class="text-[#00b4d8] tracking-[1px]">UTC 00:00:00</span>
-      <button class="bg-[rgba(230,57,70,0.15)] border border-[#e63946] text-[#e63946] font-['Share_Tech_Mono'] text-[10px] px-3 py-1.5 cursor-pointer tracking-[1px] hover:bg-[#e63946] hover:text-white transition-all" onclick="toggleAlerts()">
-        ⚡ ALERTS <span id="alertBadge" class="ml-1 bg-white text-[#e63946] px-1 rounded-full">0</span>
-      </button>
-      <button class="text-[#556475] hover:text-[#e63946] transition-colors" onclick="openSearch()">
-        <i class="fas fa-search"></i>
-      </button>
-      <button class="text-[#556475] hover:text-[#e63946] transition-colors" onclick="openSettings()">
-        <i class="fas fa-cog"></i>
-      </button>
+    <div class="time-display">
+      <div class="time-dot"></div>
+      <span id="clock">00:00:00 UTC</span>
     </div>
   </div>
 
-  <!-- TICKER -->
-  <div class="bg-[rgba(230,57,70,0.08)] border-b border-[rgba(230,57,70,0.3)] h-[30px] overflow-hidden flex items-center flex-shrink-0">
-    <div class="bg-[#e63946] text-white font-['Barlow_Condensed'] font-bold text-[11px] px-3.5 h-full flex items-center tracking-[2px] flex-shrink-0">
-      BREAKING
-    </div>
-    <div class="overflow-hidden flex-1">
-      <div class="flex animate-ticker whitespace-nowrap" id="ticker">
-        <span class="font-['Share_Tech_Mono'] text-[11px] text-[#c9d1d9] px-10 before:content-['◆_'] before:text-[#e63946]">Loading ticker data...</span>
-      </div>
+  <div class="ticker-container">
+    <div class="ticker-label">BREAKING</div>
+    <div class="ticker-content">
+      <div class="ticker-track animate-ticker" id="ticker"></div>
     </div>
   </div>
 
-  <!-- MAIN GRID -->
-  <div class="flex-1 grid grid-cols-[300px_1fr_320px] gap-0 overflow-hidden min-h-0">
-
-    <!-- LEFT PANEL - NEWS FEED WITH FILTERS -->
-    <div class="bg-[#0d1117] border-r border-[#1e2d3d] flex flex-col overflow-hidden">
-      <div class="px-4 py-3 border-b border-[#1e2d3d] flex justify-between items-center">
-        <div class="font-['Barlow_Condensed'] font-bold text-[13px] tracking-[2px] text-[#556475]">LIVE FEED</div>
-        <div class="flex gap-2">
-          <span class="bg-[#e63946] text-white text-[10px] px-1.5 py-[2px] rounded-sm font-['Share_Tech_Mono']" id="feedCount">0</span>
-          <button class="text-[#556475] hover:text-[#e63946] text-xs" onclick="refreshFeed()">
-            <i class="fas fa-sync-alt"></i>
-          </button>
-        </div>
+  <div class="main-layout">
+    <!-- Left Panel - News Feed -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><i class="fas fa-newspaper"></i> LIVE FEED</div>
+        <span class="panel-badge" id="feedCount">0</span>
       </div>
-      
-      <!-- Advanced Filters -->
-      <div class="p-2 border-b border-[#1e2d3d] bg-[#111820]">
-        <div class="flex gap-1 mb-1">
-          <button class="filter-btn flex-1 py-1 px-1 bg-transparent text-[#556475] font-['Share_Tech_Mono'] text-[8px] border-b-2 border-transparent hover:text-[#c9d1d9] active text-[#e63946] border-b-[#e63946]" onclick="filterFeed(this,'all')">ALL</button>
-          <button class="filter-btn flex-1 py-1 px-1 bg-transparent text-[#556475] font-['Share_Tech_Mono'] text-[8px] border-b-2 border-transparent hover:text-[#c9d1d9]" onclick="filterFeed(this,'critical')">⚡CRIT</button>
-          <button class="filter-btn flex-1 py-1 px-1 bg-transparent text-[#556475] font-['Share_Tech_Mono'] text-[8px] border-b-2 border-transparent hover:text-[#c9d1d9]" onclick="filterFeed(this,'airstrike')">✈️AIR</button>
-          <button class="filter-btn flex-1 py-1 px-1 bg-transparent text-[#556475] font-['Share_Tech_Mono'] text-[8px] border-b-2 border-transparent hover:text-[#c9d1d9]" onclick="filterFeed(this,'diplomatic')">🤝DIP</button>
-          <button class="filter-btn flex-1 py-1 px-1 bg-transparent text-[#556475] font-['Share_Tech_Mono'] text-[8px] border-b-2 border-transparent hover:text-[#c9d1d9]" onclick="filterFeed(this,'aid')">🚑AID</button>
-        </div>
-        
-        <!-- Region Filter -->
-        <select id="regionFilter" class="w-full bg-[#0d1117] border border-[#1e2d3d] text-[10px] p-1 font-['Share_Tech_Mono'] text-[#556475] mb-1" onchange="applyFilters()">
-          <option value="all">ALL REGIONS</option>
-          <option value="Eastern Europe">EASTERN EUROPE</option>
-          <option value="Middle East">MIDDLE EAST</option>
-          <option value="North Africa">NORTH AFRICA</option>
-          <option value="South Asia">SOUTH ASIA</option>
-          <option value="Sahel Region">SAHEL</option>
-          <option value="Horn of Africa">HORN OF AFRICA</option>
-          <option value="Southeast Asia">SOUTHEAST ASIA</option>
-        </select>
-        
-        <!-- Source Filter -->
-        <select id="sourceFilter" class="w-full bg-[#0d1117] border border-[#1e2d3d] text-[10px] p-1 font-['Share_Tech_Mono'] text-[#556475]" onchange="applyFilters()">
-          <option value="all">ALL SOURCES</option>
-        </select>
+      <div class="filter-group">
+        <button class="filter-btn active" onclick="filterFeed('all')">ALL</button>
+        <button class="filter-btn" onclick="filterFeed('critical')">CRITICAL</button>
+        <button class="filter-btn" onclick="filterFeed('airstrike')">AIR</button>
+        <button class="filter-btn" onclick="filterFeed('diplomatic')">DIPL</button>
+        <button class="filter-btn" onclick="filterFeed('aid')">AID</button>
       </div>
-      
-      <div class="flex-1 overflow-y-auto scrollbar-thin" id="newsFeed">
-        <div class="p-4 text-center text-[#556475]">Loading news...</div>
-      </div>
+      <select class="filter-btn" style="margin: 8px 16px; width: calc(100% - 32px);" onchange="filterByRegion(this.value)">
+        <option value="all">🌍 ALL REGIONS</option>
+        <option value="eastern europe">📍 EASTERN EUROPE</option>
+        <option value="middle east">📍 MIDDLE EAST</option>
+        <option value="north africa">📍 NORTH AFRICA</option>
+        <option value="south asia">📍 SOUTH ASIA</option>
+        <option value="sahel region">📍 SAHEL</option>
+      </select>
+      <div class="news-feed" id="newsFeed"></div>
     </div>
 
-    <!-- CENTER PANEL - MAP + VIDEOS + CHARTS -->
-    <div class="flex flex-col overflow-hidden relative">
-      <!-- MAP CONTAINER -->
-      <div class="h-[45%] relative bg-[#0a1628] overflow-hidden border-b border-[#1e2d3d]">
-        <div class="absolute inset-0" style="background: radial-gradient(ellipse at 30% 40%, rgba(0,50,100,0.4) 0%, transparent 50%), radial-gradient(ellipse at 70% 60%, rgba(0,30,80,0.3) 0%, transparent 40%), linear-gradient(135deg, #060e1a 0%, #0a1628 50%, #060e1a 100%);">
-          <div class="absolute inset-0" style="background-image: repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(30,45,61,0.3) 39px, rgba(30,45,61,0.3) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(30,45,61,0.3) 39px, rgba(30,45,61,0.3) 40px);"></div>
-          <div class="absolute w-full h-[2px] bg-gradient-to-r from-transparent via-[#00b4d8] to-transparent animate-scan"></div>
-          
-          <!-- Dynamic Map Markers -->
-          <div id="map-markers"></div>
-
-          <!-- Map Controls -->
-          <div class="absolute top-3 right-3 flex flex-col gap-1 z-10">
-            <button class="w-8 h-8 bg-[#0d1117]/90 border border-[#1e2d3d] text-[#c9d1d9] flex items-center justify-center cursor-pointer hover:border-[#e63946] hover:text-[#e63946]" onclick="zoomMap('in')">+</button>
-            <button class="w-8 h-8 bg-[#0d1117]/90 border border-[#1e2d3d] text-[#c9d1d9] flex items-center justify-center cursor-pointer hover:border-[#e63946] hover:text-[#e63946]" onclick="zoomMap('out')">−</button>
-            <button class="w-8 h-8 bg-[#0d1117]/90 border border-[#1e2d3d] text-[#c9d1d9] flex items-center justify-center cursor-pointer hover:border-[#e63946] hover:text-[#e63946]" onclick="resetMap()">⊙</button>
+    <!-- Center Panel - Map & Videos -->
+    <div class="panel" style="border-right: none;">
+      <div class="map-container">
+        <div class="map-grid"></div>
+        <div class="map-scan"></div>
+        <div id="mapMarkers"></div>
+        <div style="position: absolute; top: 20px; right: 20px; display: flex; gap: 8px;">
+          <button class="action-btn" style="background: var(--bg-tertiary);"><i class="fas fa-plus"></i></button>
+          <button class="action-btn" style="background: var(--bg-tertiary);"><i class="fas fa-minus"></i></button>
+          <button class="action-btn" style="background: var(--bg-tertiary);"><i class="fas fa-location-dot"></i></button>
+        </div>
+        <div style="position: absolute; bottom: 20px; left: 20px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+            <div style="width: 8px; height: 8px; background: var(--accent-red); border-radius: 50%;"></div>
+            <span style="font-size: 9px; font-family: 'Share Tech Mono', monospace;">HIGH INTENSITY</span>
           </div>
-
-          <!-- Legend -->
-          <div class="absolute bottom-3 left-3 bg-[#0d1117]/85 border border-[#1e2d3d] p-2 font-['Share_Tech_Mono'] text-[8px]">
-            <div class="flex items-center gap-2 mb-1 text-[#556475]">
-              <div class="w-2 h-2 rounded-full bg-[#e63946]"></div>
-              <span>HIGH INTENSITY</span>
-            </div>
-            <div class="flex items-center gap-2 mb-1 text-[#556475]">
-              <div class="w-2 h-2 rounded-full bg-[#f4a261]"></div>
-              <span>MEDIUM INTENSITY</span>
-            </div>
-            <div class="flex items-center gap-2 text-[#556475]">
-              <div class="w-2 h-2 rounded-full bg-[#00b4d8]"></div>
-              <span>MONITORING</span>
-            </div>
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+            <div style="width: 8px; height: 8px; background: var(--accent-orange); border-radius: 50%;"></div>
+            <span style="font-size: 9px; font-family: 'Share Tech Mono', monospace;">MEDIUM INTENSITY</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 8px; height: 8px; background: var(--accent-blue); border-radius: 50%;"></div>
+            <span style="font-size: 9px; font-family: 'Share Tech Mono', monospace;">LOW INTENSITY</span>
           </div>
         </div>
       </div>
+      <div class="video-strip">
+        <div class="video-label"><i class="fas fa-video"></i><span>LIVE</span></div>
+        <div class="video-grid" id="videoGrid"></div>
+      </div>
+    </div>
 
-      <!-- STATS CHARTS -->
-      <div class="h-[25%] bg-[#0d1117] border-b border-[#1e2d3d] p-2">
-        <div class="flex justify-between items-center mb-2">
-          <span class="font-['Share_Tech_Mono'] text-[10px] text-[#556475]">24H INCIDENT TREND</span>
-          <div class="flex gap-2">
-            <span class="text-[#2ecc71] text-[10px]" id="trend">↑ 0%</span>
-            <select id="chartRange" class="bg-[#111820] border border-[#1e2d3d] text-[8px] p-1 text-[#556475]" onchange="updateChartRange()">
-              <option value="24">24H</option>
-              <option value="48">48H</option>
-              <option value="72">72H</option>
-              <option value="168">7D</option>
-            </select>
+    <!-- Right Panel - Stats & Alerts -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><i class="fas fa-chart-line"></i> SITREP</div>
+        <button class="action-btn" style="width: auto; padding: 0 12px;" onclick="exportData()">
+          <i class="fas fa-download"></i> CSV
+        </button>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number red" id="criticalCount">0</div>
+          <div class="stat-desc">CRITICAL</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number orange" id="militaryCount">0</div>
+          <div class="stat-desc">MILITARY</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number blue" id="civilianCount">0</div>
+          <div class="stat-desc">CIVILIAN</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number green" id="displacedCount">0</div>
+          <div class="stat-desc">DISPLACED</div>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <div class="chart-header">
+          <span class="chart-title">24H INCIDENT TREND</span>
+          <span class="chart-trend" id="trend">0%</span>
+        </div>
+        <div class="chart-bars" id="barChart"></div>
+      </div>
+
+      <!-- Economic Indicators -->
+      <div class="data-section">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span class="chart-title">MARKET INDICATORS</span>
+          <span class="chart-trend" id="marketTime">LIVE</span>
+        </div>
+        <div class="data-grid">
+          <div class="data-item">
+            <div class="data-label">GOLD</div>
+            <div class="data-value" style="color: #ffd700;" id="goldPrice">$0</div>
+          </div>
+          <div class="data-item">
+            <div class="data-label">OIL</div>
+            <div class="data-value" style="color: var(--accent-orange);" id="oilPrice">$0</div>
+          </div>
+          <div class="data-item">
+            <div class="data-label">VIX</div>
+            <div class="data-value" style="color: var(--accent-red);" id="vixPrice">0</div>
+          </div>
+          <div class="data-item">
+            <div class="data-label">S&P 500</div>
+            <div class="data-value" style="color: var(--accent-green);" id="spPrice">0</div>
           </div>
         </div>
-        <div class="chart-container">
-          <canvas id="incidentChart"></canvas>
-        </div>
       </div>
 
-      <!-- VIDEO STRIP -->
-      <div class="h-[30%] border-t border-[#1e2d3d] flex bg-[#0d1117] flex-shrink-0">
-        <div class="writing-vertical font-['Barlow_Condensed'] text-[11px] tracking-[3px] text-[#556475] px-2 py-3 border-r border-[#1e2d3d] flex items-center" style="writing-mode: vertical-rl;">
-          LIVE STREAMS
+      <!-- Cyber Threats -->
+      <div class="data-section">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span class="chart-title">⚠️ CYBER THREATS</span>
+          <span class="chart-trend" id="cyberCount">0</span>
         </div>
-        <div class="flex-1 grid grid-cols-4 gap-[1px] bg-[#1e2d3d] overflow-hidden" id="videoGrid">
-          <!-- Videos will be injected here -->
-        </div>
-      </div>
-    </div>
-
-    <!-- RIGHT PANEL - ALERTS + STATS + REGION INFO -->
-    <div class="bg-[#0d1117] border-l border-[#1e2d3d] flex flex-col overflow-hidden">
-      <div class="px-4 py-3 border-b border-[#1e2d3d] font-['Barlow_Condensed'] font-bold text-[13px] tracking-[2px] text-[#556475] flex justify-between">
-        SITUATION REPORT
-        <button class="text-[#556475] hover:text-[#e63946]" onclick="exportData()">
-          <i class="fas fa-download"></i>
-        </button>
+        <div id="cyberList" style="font-size: 10px; max-height: 80px; overflow-y: auto;"></div>
       </div>
 
-      <!-- Enhanced Stats Grid -->
-      <div class="grid grid-cols-2 gap-[1px] bg-[#1e2d3d] border-b border-[#1e2d3d] flex-shrink-0">
-        <div class="bg-[#111820] p-2 text-center tooltip">
-          <div class="font-['Barlow_Condensed'] text-[20px] font-black leading-none text-[#e63946]" id="statCritical">0</div>
-          <div class="font-['Share_Tech_Mono'] text-[7px] text-[#556475]">CRITICAL</div>
-          <span class="tooltip-text">Critical events</span>
+      <!-- Natural Disasters -->
+      <div class="data-section">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span class="chart-title">🌍 NATURAL DISASTERS</span>
+          <span class="chart-trend" id="disasterCount">0</span>
         </div>
-        <div class="bg-[#111820] p-2 text-center tooltip">
-          <div class="font-['Barlow_Condensed'] text-[20px] font-black leading-none text-[#f4a261]" id="statMilitary">0</div>
-          <div class="font-['Share_Tech_Mono'] text-[7px] text-[#556475]">MILITARY</div>
-          <span class="tooltip-text">Military casualties</span>
-        </div>
-        <div class="bg-[#111820] p-2 text-center tooltip">
-          <div class="font-['Barlow_Condensed'] text-[20px] font-black leading-none text-[#00b4d8]" id="statCivilian">0</div>
-          <div class="font-['Share_Tech_Mono'] text-[7px] text-[#556475]">CIVILIAN</div>
-          <span class="tooltip-text">Civilian casualties</span>
-        </div>
-        <div class="bg-[#111820] p-2 text-center tooltip">
-          <div class="font-['Barlow_Condensed'] text-[20px] font-black leading-none text-[#2ecc71]" id="statDisplaced">0</div>
-          <div class="font-['Share_Tech_Mono'] text-[7px] text-[#556475]">DISPLACED</div>
-          <span class="tooltip-text">Displaced persons</span>
-        </div>
+        <div id="disasterList" style="font-size: 10px; max-height: 80px; overflow-y: auto;"></div>
       </div>
 
-      <!-- Region Stats -->
-      <div class="px-3 py-2 border-b border-[#1e2d3d] bg-[#111820]">
-        <div class="font-['Share_Tech_Mono'] text-[9px] text-[#556475] mb-1">REGION INTENSITY</div>
-        <div id="regionStats" class="space-y-1 max-h-[80px] overflow-y-auto">
-          <!-- Region stats will be injected here -->
-        </div>
+      <div class="panel-header" style="border-top: none;">
+        <div class="panel-title"><i class="fas fa-bell"></i> ALERTS</div>
+        <span class="panel-badge" id="alertCount">0</span>
       </div>
+      <div class="alerts-list" id="alertsList"></div>
 
-      <!-- Mini Timeline -->
-      <div class="px-3 py-2 border-b border-[#1e2d3d]">
-        <div class="flex justify-between font-['Share_Tech_Mono'] text-[8px] text-[#556475] mb-1">
-          <span>RECENT TIMELINE</span>
-          <span class="text-[#e63946]" id="timelineCount">0</span>
-        </div>
-        <div id="timeline" class="space-y-1 max-h-[60px] overflow-y-auto text-[8px]"></div>
-      </div>
-
-      <div class="px-4 py-2 border-b border-[#1e2d3d] font-['Barlow_Condensed'] font-bold text-[13px] tracking-[2px] text-[#556475] flex justify-between items-center">
-        PRIORITY ALERTS
-        <span class="bg-[#e63946] text-white text-[10px] px-1.5 py-[2px] rounded-sm font-['Share_Tech_Mono']" id="alertCount">0</span>
-      </div>
-
-      <div class="flex-1 overflow-y-auto" id="alertsList">
-        <div class="p-4 text-center text-[#556475]">Loading alerts...</div>
-      </div>
-
-      <!-- Quick Actions -->
-      <div class="p-2 border-t border-[#1e2d3d] flex gap-1 justify-around">
-        <button class="text-[#556475] hover:text-[#e63946] text-xs p-1" onclick="shareReport()">
-          <i class="fas fa-share-alt"></i>
-        </button>
-        <button class="text-[#556475] hover:text-[#e63946] text-xs p-1" onclick="bookmarkPage()">
-          <i class="fas fa-bookmark"></i>
-        </button>
-        <button class="text-[#556475] hover:text-[#e63946] text-xs p-1" onclick="printReport()">
-          <i class="fas fa-print"></i>
-        </button>
-        <button class="text-[#556475] hover:text-[#e63946] text-xs p-1" onclick="fullscreen()">
-          <i class="fas fa-expand"></i>
-        </button>
+      <div class="quick-actions">
+        <button class="action-btn" onclick="search()"><i class="fas fa-search"></i></button>
+        <button class="action-btn" onclick="settings()"><i class="fas fa-sliders"></i></button>
+        <button class="action-btn" onclick="share()"><i class="fas fa-share-alt"></i></button>
+        <button class="action-btn" onclick="refresh()"><i class="fas fa-sync-alt"></i></button>
       </div>
     </div>
   </div>
 
-  <!-- SEARCH MODAL -->
-  <div id="searchModal" class="modal">
-    <div class="modal-content p-4">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="font-['Barlow_Condensed'] text-xl font-bold">ADVANCED SEARCH</h2>
-        <button onclick="closeModal()" class="text-[#e63946]">&times;</button>
-      </div>
-      
-      <input type="text" id="searchInput" placeholder="Search keywords..." class="w-full bg-[#111820] border border-[#1e2d3d] p-2 mb-3 text-sm">
-      
-      <div class="grid grid-cols-2 gap-2 mb-3">
-        <select id="searchCategory" class="bg-[#111820] border border-[#1e2d3d] p-2 text-sm">
-          <option value="all">All Categories</option>
-          <option value="critical">Critical</option>
-          <option value="airstrike">Airstrike</option>
-          <option value="diplomatic">Diplomatic</option>
-          <option value="aid">Aid</option>
-        </select>
-        
-        <select id="searchRegion" class="bg-[#111820] border border-[#1e2d3d] p-2 text-sm">
-          <option value="all">All Regions</option>
-          <option value="Eastern Europe">Eastern Europe</option>
-          <option value="Middle East">Middle East</option>
-          <option value="North Africa">North Africa</option>
-        </select>
-      </div>
-      
-      <div class="grid grid-cols-2 gap-2 mb-3">
-        <input type="date" id="searchFrom" class="bg-[#111820] border border-[#1e2d3d] p-2 text-sm">
-        <input type="date" id="searchTo" class="bg-[#111820] border border-[#1e2d3d] p-2 text-sm">
-      </div>
-      
-      <div class="flex gap-2">
-        <button onclick="performSearch()" class="flex-1 bg-[#e63946] text-white p-2 text-sm hover:bg-[#c92c3a]">SEARCH</button>
-        <button onclick="saveSearch()" class="bg-[#111820] border border-[#1e2d3d] p-2 text-sm hover:border-[#e63946]">SAVE</button>
-      </div>
-      
-      <div id="searchResults" class="mt-4 max-h-60 overflow-y-auto"></div>
-    </div>
-  </div>
+  <button class="fab" onclick="showQuickMenu()"><i class="fas fa-plus"></i></button>
 
-  <!-- SETTINGS MODAL -->
-  <div id="settingsModal" class="modal">
-    <div class="modal-content p-4">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="font-['Barlow_Condensed'] text-xl font-bold">SETTINGS</h2>
-        <button onclick="closeModal()" class="text-[#e63946]">&times;</button>
-      </div>
-      
-      <div class="space-y-3">
-        <label class="flex items-center gap-2">
-          <input type="checkbox" id="darkMode" checked class="accent-[#e63946]">
-          <span class="text-sm">Dark Mode</span>
-        </label>
-        
-        <label class="flex items-center gap-2">
-          <input type="checkbox" id="soundAlerts" class="accent-[#e63946]">
-          <span class="text-sm">Sound Alerts for Critical Events</span>
-        </label>
-        
-        <label class="flex items-center gap-2">
-          <input type="checkbox" id="autoRefresh" checked class="accent-[#e63946]">
-          <span class="text-sm">Auto-refresh (every 15 min)</span>
-        </label>
-        
-        <div>
-          <label class="text-sm block mb-1">Refresh Interval</label>
-          <select id="refreshInterval" class="w-full bg-[#111820] border border-[#1e2d3d] p-2 text-sm">
-            <option value="5">5 minutes</option>
-            <option value="15" selected>15 minutes</option>
-            <option value="30">30 minutes</option>
-            <option value="60">1 hour</option>
-          </select>
-        </div>
-        
-        <div>
-          <label class="text-sm block mb-1">Default View</label>
-          <select id="defaultView" class="w-full bg-[#111820] border border-[#1e2d3d] p-2 text-sm">
-            <option value="all">All News</option>
-            <option value="critical">Critical Only</option>
-            <option value="airstrike">Airstrike Focus</option>
-          </select>
-        </div>
-        
-        <button onclick="saveSettings()" class="w-full bg-[#e63946] text-white p-2 text-sm hover:bg-[#c92c3a] mt-2">
-          SAVE SETTINGS
-        </button>
-      </div>
-    </div>
-  </div>
-
+  <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
-
-    // DOM Elements
-    const newsFeed = document.getElementById('newsFeed');
-    const videoGrid = document.getElementById('videoGrid');
-    const alertsList = document.getElementById('alertsList');
-    const ticker = document.getElementById('ticker');
-    const mapMarkers = document.getElementById('map-markers');
-    const regionStats = document.getElementById('regionStats');
-    const timeline = document.getElementById('timeline');
-
-    // State
     let allNews = [];
-    let allVideos = [];
-    let allAlerts = [];
-    let incidentHistory = [];
-    let regionData = {};
-    let chart = null;
-    let currentFilters = { category: 'all', region: 'all', source: 'all' };
+    let currentFilter = 'all';
+    let currentRegion = 'all';
 
-    // Severity classes
-    const sevClasses = {
-      critical: 'border-l-[3px] border-l-[#e63946]',
-      warning: 'border-l-[3px] border-l-[#f4a261]',
-      info: 'border-l-[3px] border-l-[#00b4d8]',
-      airstrike: 'border-l-[3px] border-l-[#e63946]',
-      diplomatic: 'border-l-[3px] border-l-[#00b4d8]',
-      aid: 'border-l-[3px] border-l-[#2ecc71]',
-      military: 'border-l-[3px] border-l-[#f4a261]'
-    };
-
-    const sevDots = {
-      critical: 'bg-[#e63946]',
-      warning: 'bg-[#f4a261]',
-      info: 'bg-[#00b4d8]',
-      airstrike: 'bg-[#e63946]',
-      diplomatic: 'bg-[#00b4d8]',
-      aid: 'bg-[#2ecc71]',
-      military: 'bg-[#f4a261]'
-    };
-
-    // Socket event listeners
+    // Socket connection
+    socket.on('connect', () => console.log('Connected to server'));
     socket.on('data-update', (data) => {
       console.log('Data received:', data);
-      
       allNews = data.news || [];
-      allVideos = data.videos || [];
-      allAlerts = data.alerts || [];
-      incidentHistory = data.history || [];
-      regionData = data.regionStats || {};
       
+      // Update all displays
       displayNews(allNews);
-      displayVideos(allVideos);
-      displayAlerts(allAlerts);
-      displayTicker(data.ticker || []);
-      displayMapMarkers(data.zones || []);
-      displayRegionStats(regionData);
-      displayTimeline(data.zones || []);
+      displayVideos(data.videos || []);
+      displayAlerts(data.alerts || []);
+      updateTicker(data.ticker || []);
       updateStats(data);
-      updateChart(incidentHistory);
-      updateSourceFilter(allNews);
+      updateEconomicData(data.economic || {});
+      updateCyberThreats(data.cyber || []);
+      updateDisasters(data.earthquakes || [], data.weather || []);
+      updateMapMarkers(data.zones || [], data.aircraft || [], data.vessels || [], data.militaryBases || []);
+      updateChart(data.history || []);
     });
 
     socket.on('filtered-news', (news) => {
       displayNews(news);
     });
 
-    // Display functions
+    // Display Functions
     function displayNews(news) {
-      if (!newsFeed) return;
+      const container = document.getElementById('newsFeed');
+      container.innerHTML = '';
       
-      if (news.length === 0) {
-        newsFeed.innerHTML = '<div class="p-4 text-center text-[#556475]">No news available</div>';
-        return;
-      }
-      
-      newsFeed.innerHTML = news.slice(0, 50).map((item, i) => {
-        const timeAgo = getTimeAgo(item.publishedAt);
-        const source = item.source || 'Unknown';
-        const sevClass = sevClasses[item.category] || sevClasses.info;
-        const dotClass = sevDots[item.category] || sevDots.info;
-        const reliabilityClass = item.reliability > 0.9 ? 'reliability-high' : 
-                                item.reliability > 0.7 ? 'reliability-medium' : 'reliability-low';
+      news.slice(0, 30).forEach(item => {
+        const categoryClass = item.category === 'critical' ? 'critical' : 
+                             item.category === 'aid' ? 'warning' : 'info';
         
-        return `
-          <div class="news-item px-3 py-2 border-b border-[#1e2d3d] cursor-pointer animate-fade-in ${sevClass} ${reliabilityClass}" onclick="showArticleDetail('${item.url}')">
-            <div class="flex justify-between items-center mb-1">
-              <span class="text-[#f4a261] font-['Share_Tech_Mono'] text-[8px]">
-                <span class="inline-block w-1.5 h-1.5 rounded-full ${dotClass} mr-1"></span>
-                ${source}
-              </span>
-              <span class="flex items-center gap-1">
-                <span class="text-[#556475] font-['Share_Tech_Mono'] text-[7px]">${timeAgo}</span>
-                ${item.reliability ? `
-                  <span class="text-[${item.reliability > 0.9 ? '#2ecc71' : item.reliability > 0.7 ? '#f4a261' : '#e63946'}] text-[7px]">
-                    ${Math.round(item.reliability * 100)}%
-                  </span>
-                ` : ''}
-              </span>
-            </div>
-            <div class="font-['Barlow_Condensed'] text-[12px] font-semibold leading-tight">${item.title || 'No title'}</div>
-            ${item.region ? `<div class="text-[#00b4d8] font-['Share_Tech_Mono'] text-[7px] mt-1">${item.region}</div>` : ''}
+        const div = document.createElement('div');
+        div.className = `news-item ${categoryClass} animate-slide-in`;
+        div.onclick = () => window.open(item.url, '_blank');
+        div.innerHTML = `
+          <div class="news-meta">
+            <span class="news-source"><i class="fas fa-circle"></i> ${item.source || 'Unknown'}</span>
+            <span class="news-time">${moment(item.publishedAt).fromNow()}</span>
+          </div>
+          <div class="news-title">${item.title}</div>
+          <div class="news-tags">
+            <span class="news-tag">${(item.category || 'general').toUpperCase()}</span>
+            ${item.region ? `<span class="news-tag region">${item.region}</span>` : ''}
           </div>
         `;
-      }).join('');
+        container.appendChild(div);
+      });
       
       document.getElementById('feedCount').textContent = news.length;
     }
 
     function displayVideos(videos) {
-      if (!videoGrid) return;
+      const container = document.getElementById('videoGrid');
+      container.innerHTML = '';
       
-      if (videos.length === 0) {
-        videoGrid.innerHTML = '<div class="col-span-4 p-4 text-center text-[#556475]">No videos available</div>';
-        return;
-      }
-      
-      const colors = ['#1a0a0a', '#0a1020', '#0a1a10', '#10100a'];
-      
-      videoGrid.innerHTML = videos.slice(0, 4).map((video, i) => `
-        <div class="relative cursor-pointer overflow-hidden hover:brightness-110 transition-all group" 
-             onclick="window.open('https://youtube.com/watch?v=${video.id}', '_blank')" 
-             style="background: ${colors[i % colors.length]};">
-          <img src="${video.thumbnail}" class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity">
-          <div class="absolute inset-0 p-1 flex flex-col justify-between bg-gradient-to-t from-black/80 to-transparent">
-            <span class="bg-[#e63946] text-white font-['Share_Tech_Mono'] text-[7px] px-1 py-[1px] self-start">● LIVE</span>
-            <div>
-              <div class="text-[#f4a261] font-['Share_Tech_Mono'] text-[8px]">${video.src || video.channel}</div>
-              <div class="font-['Barlow_Condensed'] text-[10px] font-semibold leading-tight text-white">${video.title.substring(0, 40)}${video.title.length > 40 ? '...' : ''}</div>
-            </div>
+      videos.slice(0, 6).forEach(video => {
+        const div = document.createElement('div');
+        div.className = 'video-card';
+        div.onclick = () => window.open(`https://youtube.com/watch?v=${video.id}`, '_blank');
+        div.innerHTML = `
+          <div class="video-overlay">
+            <div class="video-source">${video.channel || 'YouTube'}</div>
+            <div class="video-title">${video.title.substring(0, 40)}...</div>
           </div>
-          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-white/20 border border-white/40 rounded-full flex items-center justify-center text-[8px] opacity-0 group-hover:opacity-100 transition-opacity">▶</div>
-        </div>
-      `).join('');
+          <div class="play-icon"><i class="fas fa-play"></i></div>
+        `;
+        container.appendChild(div);
+      });
     }
 
     function displayAlerts(alerts) {
-      if (!alertsList) return;
+      const container = document.getElementById('alertsList');
+      container.innerHTML = '';
       
-      if (alerts.length === 0) {
-        alertsList.innerHTML = '<div class="p-4 text-center text-[#556475]">No active alerts</div>';
-        return;
-      }
-      
-      alertsList.innerHTML = alerts.map((alert, i) => `
-        <div class="p-2 border-b border-[#1e2d3d] animate-fade-in hover:bg-[#111820] transition-colors" onclick="acknowledgeAlert('${alert.id}')">
-          <div class="flex justify-between items-center">
-            <span class="font-['Share_Tech_Mono'] text-[8px] text-[#556475]">${alert.time || 'NOW'} UTC</span>
-            ${alert.reliability ? `<span class="text-[${alert.reliability > 0.9 ? '#2ecc71' : '#f4a261'}] text-[7px]">${Math.round(alert.reliability * 100)}%</span>` : ''}
-          </div>
-          <div class="font-['Barlow_Condensed'] text-[11px] font-semibold leading-tight">${alert.msg}</div>
-          <div class="flex justify-between items-center mt-1">
-            <span class="inline-block font-['Share_Tech_Mono'] text-[7px] px-1 py-[1px] ${alert.tagClass || 'bg-[rgba(230,57,70,0.2)] text-[#e63946]'}">${alert.tag || 'ALERT'}</span>
-            ${alert.region ? `<span class="text-[#00b4d8] text-[7px]">${alert.region}</span>` : ''}
-          </div>
-        </div>
-      `).join('');
+      alerts.slice(0, 8).forEach(alert => {
+        const div = document.createElement('div');
+        div.className = `alert-item ${alert.type || 'warning'} animate-slide-in`;
+        div.innerHTML = `
+          <div class="alert-time">${alert.time || 'Now'}</div>
+          <div class="alert-message">${alert.msg}</div>
+          <span class="alert-tag">${alert.tag || 'ALERT'}</span>
+        `;
+        container.appendChild(div);
+      });
       
       document.getElementById('alertCount').textContent = alerts.length;
-      document.getElementById('alertBadge').textContent = alerts.length;
     }
 
-    function displayTicker(items) {
-      if (!ticker || items.length === 0) return;
+    function updateTicker(items) {
+      const ticker = document.getElementById('ticker');
+      if (!ticker) return;
       
-      ticker.innerHTML = items.map(item => 
-        `<span class="font-['Share_Tech_Mono'] text-[11px] text-[#c9d1d9] px-10 before:content-['◆_'] before:text-[#e63946]">${item}</span>`
-      ).join('');
-    }
-
-    function displayMapMarkers(zones) {
-      if (!mapMarkers) return;
-      
-      const zonePositions = {
-        'Eastern Europe': { top: '32%', left: '55%' },
-        'Middle East': { top: '48%', left: '63%' },
-        'North Africa': { top: '58%', left: '52%' },
-        'South Asia': { top: '42%', left: '74%' },
-        'Sahel Region': { top: '62%', left: '42%' },
-        'Horn of Africa': { top: '55%', left: '58%' },
-        'Southeast Asia': { top: '45%', left: '82%' },
-        'Caucasus': { top: '28%', left: '58%' }
-      };
-      
-      const zoneColors = {
-        'high': '#e63946',
-        'medium': '#f4a261',
-        'low': '#00b4d8'
-      };
-      
-      mapMarkers.innerHTML = zones.map(zone => {
-        const pos = zonePositions[zone.name] || { top: '50%', left: '50%' };
-        const color = zoneColors[zone.intensity] || '#e63946';
-        const intensity = zone.intensity.toUpperCase();
-        
-        return `
-          <div class="absolute" style="top: ${pos.top}; left: ${pos.left}; transform: translate(-50%, -50%); z-index: ${zone.intensity === 'high' ? 20 : 10};" 
-               onclick="showZoneInfo('${zone.name}')">
-            <div class="absolute w-10 h-10 rounded-full border-2 border-[${color}] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-marker-pulse opacity-60"></div>
-            <div class="absolute w-[60px] h-[60px] rounded-full border-2 border-[${color}] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-marker-pulse opacity-60" style="animation-delay:0.5s"></div>
-            <div class="w-3.5 h-3.5 bg-[${color}] rounded-full relative z-10 shadow-[0_0_10px_${color}]"></div>
-            <div class="absolute top-full left-1/2 -translate-x-1/2 mt-1 font-['Share_Tech_Mono'] text-[8px] text-white whitespace-nowrap bg-black/70 px-1.5 py-0.5 rounded">
-              ${zone.name} (${intensity}) • ${zone.events || 0} events
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function displayRegionStats(stats) {
-      if (!regionStats) return;
-      
-      regionStats.innerHTML = Object.entries(stats).map(([region, data]) => `
-        <div class="flex justify-between items-center text-[8px]">
-          <span class="text-[#556475]">${region}</span>
-          <div class="flex items-center gap-2">
-            <span class="text-[${data.intensity === 'high' ? '#e63946' : data.intensity === 'medium' ? '#f4a261' : '#00b4d8'}]">${data.intensity}</span>
-            <span class="text-[#556475]">${data.events || 0} ev</span>
-          </div>
-        </div>
+      ticker.innerHTML = items.map(item => `
+        <span class="ticker-item"><i class="fas fa-circle"></i>${item}</span>
       `).join('');
-    }
-
-    function displayTimeline(zones) {
-      if (!timeline) return;
-      
-      const events = zones.filter(z => z.events > 0).map(z => ({
-        time: new Date().toLocaleTimeString(),
-        event: `${z.name}: ${z.events} new events`
-      })).slice(0, 3);
-      
-      timeline.innerHTML = events.map(e => `
-        <div class="flex items-center gap-1">
-          <span class="text-[#e63946] text-[6px]">●</span>
-          <span class="text-[#556475]">${e.time}</span>
-          <span class="text-[#c9d1d9] truncate">${e.event}</span>
-        </div>
-      `).join('');
-      
-      document.getElementById('timelineCount').textContent = events.length;
     }
 
     function updateStats(data) {
       document.getElementById('eventCount').textContent = data.news?.length || 0;
-      document.getElementById('activeZones').textContent = data.zones?.filter(z => z.status === 'active').length || 0;
-      
-      const uniqueSources = [...new Set(data.news?.map(n => n.source))].length;
-      document.getElementById('sources').textContent = uniqueSources;
-      
-      const avgReliability = data.news?.reduce((acc, n) => acc + (n.reliability || 0.8), 0) / (data.news?.length || 1);
-      document.getElementById('uptime').textContent = Math.round(avgReliability * 100) + '%';
+      document.getElementById('zoneCount').textContent = data.zones?.length || 0;
+      document.getElementById('aircraftCount').textContent = data.aircraft?.length || 0;
+      document.getElementById('vesselCount').textContent = data.vessels?.length || 0;
       
       const casualties = data.casualties || {};
-      document.getElementById('statCritical').textContent = data.news?.filter(n => n.category === 'critical').length || 0;
-      document.getElementById('statMilitary').textContent = casualties.military?.total || 0;
-      document.getElementById('statCivilian').textContent = casualties.civilian || 0;
-      document.getElementById('statDisplaced').textContent = casualties.displaced || 0;
+      document.getElementById('criticalCount').textContent = data.news?.filter(n => n.category === 'critical').length || 0;
+      document.getElementById('militaryCount').textContent = casualties.military?.total || 0;
+      document.getElementById('civilianCount').textContent = (casualties.civilian || 0).toLocaleString();
+      document.getElementById('displacedCount').textContent = (casualties.displaced || 0).toLocaleString();
       
       const trend = casualties.trend || 0;
       document.getElementById('trend').textContent = `${trend > 0 ? '↑' : '↓'} ${Math.abs(trend).toFixed(1)}%`;
-      document.getElementById('trend').className = trend > 0 ? 'text-[#e63946] text-[10px]' : 'text-[#2ecc71] text-[10px]';
+      document.getElementById('trend').className = `chart-trend ${trend > 0 ? 'text-red-500' : 'text-green-500'}`;
     }
 
-    function updateSourceFilter(news) {
-      const sources = [...new Set(news.map(n => n.source))].filter(Boolean);
-      const select = document.getElementById('sourceFilter');
-      
-      select.innerHTML = '<option value="all">ALL SOURCES</option>' + 
-        sources.map(s => `<option value="${s}">${s}</option>`).join('');
+    function updateEconomicData(economic) {
+      if (economic.gold) document.getElementById('goldPrice').textContent = `$${economic.gold.toFixed(2)}`;
+      if (economic.oil) document.getElementById('oilPrice').textContent = `$${economic.oil.toFixed(2)}`;
+      if (economic.vix) document.getElementById('vixPrice').textContent = economic.vix.toFixed(2);
+      if (economic.sp500) document.getElementById('spPrice').textContent = economic.sp500.toLocaleString();
     }
 
-    function updateChart(history) {
-      if (!history || history.length === 0) return;
+    function updateCyberThreats(threats) {
+      const container = document.getElementById('cyberList');
+      document.getElementById('cyberCount').textContent = threats.length;
       
-      const ctx = document.getElementById('incidentChart').getContext('2d');
-      
-      if (chart) chart.destroy();
-      
-      chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: history.map((_, i) => `${i}h`),
-          datasets: [{
-            label: 'Incidents',
-            data: history,
-            borderColor: '#e63946',
-            backgroundColor: 'rgba(230,57,70,0.1)',
-            tension: 0.4,
-            fill: true,
-            pointRadius: 2,
-            pointHoverRadius: 4
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: { backgroundColor: '#0d1117' }
-          },
-          scales: {
-            x: { 
-              display: false,
-              grid: { display: false }
-            },
-            y: { 
-              display: false,
-              grid: { display: false },
-              beginAtZero: true
-            }
-          },
-          elements: {
-            line: { borderWidth: 1 }
-          }
-        }
-      });
-    }
-
-    function updateChartRange() {
-      const range = document.getElementById('chartRange').value;
-      // Would need to fetch different range from server
-    }
-
-    // Filter functions
-    window.filterFeed = function(btn, category) {
-      document.querySelectorAll('.filter-btn').forEach(b => {
-        b.classList.remove('text-[#e63946]', 'border-b-[#e63946]');
-        b.classList.add('text-[#556475]');
-      });
-      btn.classList.add('text-[#e63946]', 'border-b-[#e63946]');
-      btn.classList.remove('text-[#556475]');
-      
-      currentFilters.category = category;
-      applyFilters();
-    }
-
-    function applyFilters() {
-      const region = document.getElementById('regionFilter').value;
-      const source = document.getElementById('sourceFilter').value;
-      
-      currentFilters.region = region;
-      currentFilters.source = source;
-      
-      socket.emit('filter-news', currentFilters);
-    }
-
-    // Helper functions
-    function getTimeAgo(dateString) {
-      if (!dateString) return 'Unknown';
-      
-      const date = new Date(dateString);
-      const now = new Date();
-      const diffMs = now - date;
-      const diffMins = Math.floor(diffMs / 60000);
-      const diffHours = Math.floor(diffMs / 3600000);
-      const diffDays = Math.floor(diffMs / 86400000);
-      
-      if (diffMins < 1) return 'Now';
-      if (diffMins < 60) return `${diffMins}m`;
-      if (diffHours < 24) return `${diffHours}h`;
-      if (diffDays < 7) return `${diffDays}d`;
-      return date.toLocaleDateString();
-    }
-
-    // Modal functions
-    window.openSearch = function() {
-      document.getElementById('searchModal').classList.add('active');
-    }
-
-    window.openSettings = function() {
-      document.getElementById('settingsModal').classList.add('active');
-    }
-
-    window.closeModal = function() {
-      document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
-    }
-
-    // Search functions
-    window.performSearch = function() {
-      const query = document.getElementById('searchInput').value;
-      const category = document.getElementById('searchCategory').value;
-      const region = document.getElementById('searchRegion').value;
-      const from = document.getElementById('searchFrom').value;
-      const to = document.getElementById('searchTo').value;
-      
-      const results = allNews.filter(item => {
-        if (query && !item.title.toLowerCase().includes(query.toLowerCase())) return false;
-        if (category !== 'all' && item.category !== category) return false;
-        if (region !== 'all' && item.region !== region) return false;
-        if (from && new Date(item.publishedAt) < new Date(from)) return false;
-        if (to && new Date(item.publishedAt) > new Date(to)) return false;
-        return true;
-      });
-      
-      displaySearchResults(results);
-    }
-
-    function displaySearchResults(results) {
-      const container = document.getElementById('searchResults');
-      container.innerHTML = results.slice(0, 20).map(r => `
-        <div class="p-2 border-b border-[#1e2d3d] text-xs cursor-pointer hover:bg-[#111820]" onclick="window.open('${r.url}', '_blank')">
-          <div class="font-bold">${r.title}</div>
-          <div class="text-[#556475] text-[10px]">${r.source} • ${getTimeAgo(r.publishedAt)}</div>
+      container.innerHTML = threats.slice(0, 5).map(threat => `
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+          <span style="color: var(--accent-red);">⚠️</span>
+          <span style="flex: 1; margin-left: 4px;">${threat.title?.substring(0, 30)}...</span>
+          <span style="color: var(--text-dim);">${moment(threat.published).fromNow()}</span>
         </div>
       `).join('');
     }
 
-    window.saveSearch = function() {
-      const name = prompt('Enter search name:');
-      if (name) {
-        // Would save to server
-        alert('Search saved!');
+    function updateDisasters(earthquakes, weather) {
+      const container = document.getElementById('disasterList');
+      const total = (earthquakes?.length || 0) + (weather?.length || 0);
+      document.getElementById('disasterCount').textContent = total;
+      
+      const allDisasters = [
+        ...(earthquakes || []).map(e => ({ type: 'earthquake', ...e })),
+        ...(weather || []).map(w => ({ type: 'weather', ...w }))
+      ].slice(0, 5);
+      
+      container.innerHTML = allDisasters.map(d => {
+        if (d.type === 'earthquake') {
+          return `
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <span style="color: var(--accent-orange);">🌋</span>
+              <span style="flex: 1; margin-left: 4px;">M${d.magnitude} - ${d.place}</span>
+              <span style="color: var(--text-dim);">${moment(d.time).fromNow()}</span>
+            </div>
+          `;
+        } else {
+          return `
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <span style="color: var(--accent-blue);">🌀</span>
+              <span style="flex: 1; margin-left: 4px;">${d.headline?.substring(0, 30)}...</span>
+              <span style="color: var(--accent-red);">${d.severity}</span>
+            </div>
+          `;
+        }
+      }).join('');
+    }
+
+    function updateMapMarkers(zones, aircraft, vessels, bases) {
+      const container = document.getElementById('mapMarkers');
+      container.innerHTML = '';
+      
+      // Zone markers (conflict areas)
+      zones.forEach(zone => {
+        if (regionCoordinates[zone.name]) {
+          const pos = regionCoordinates[zone.name];
+          const color = zone.intensity === 'high' ? 'var(--accent-red)' : 
+                       zone.intensity === 'medium' ? 'var(--accent-orange)' : 'var(--accent-blue)';
+          
+          const marker = document.createElement('div');
+          marker.className = 'map-marker';
+          marker.style.top = pos.top;
+          marker.style.left = pos.left;
+          marker.innerHTML = `
+            <div class="marker-dot" style="background: ${color}; box-shadow: 0 0 20px ${color};"></div>
+            <span class="marker-label">${zone.name}</span>
+          `;
+          container.appendChild(marker);
+        }
+      });
+      
+      // Aircraft markers (live)
+      aircraft.slice(0, 20).forEach(a => {
+        if (a.latitude && a.longitude) {
+          const marker = document.createElement('div');
+          marker.className = 'map-marker';
+          marker.style.top = `${50 - (a.latitude * 0.55)}%`;
+          marker.style.left = `${50 + (a.longitude * 0.27)}%`;
+          
+          const color = a.isMilitary ? 'var(--accent-red)' : 'var(--accent-blue)';
+          marker.innerHTML = `
+            <div class="marker-dot" style="background: ${color}; width: 8px; height: 8px;"></div>
+            <span class="marker-label">${a.callsign || 'AC'}</span>
+          `;
+          container.appendChild(marker);
+        }
+      });
+      
+      // Base markers
+      bases.slice(0, 10).forEach(base => {
+        const marker = document.createElement('div');
+        marker.className = 'map-marker';
+        marker.style.top = `${50 - (base.lat * 0.55)}%`;
+        marker.style.left = `${50 + (base.lng * 0.27)}%`;
+        marker.innerHTML = `
+          <div class="marker-dot" style="background: var(--accent-purple); width: 8px; height: 8px;"></div>
+          <span class="marker-label">${base.name}</span>
+        `;
+        container.appendChild(marker);
+      });
+    }
+
+    function updateChart(history) {
+      const container = document.getElementById('barChart');
+      const values = history.length ? history : [3,5,4,8,12,9,15,22,18,25,30,24,19,28,35,41,38,32,27,33,29,22,18,15];
+      const max = Math.max(...values);
+      
+      container.innerHTML = '';
+      values.slice(0, 24).forEach(v => {
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        bar.style.height = `${(v / max) * 100}%`;
+        bar.style.opacity = 0.4 + (v / max) * 0.6;
+        container.appendChild(bar);
+      });
+    }
+
+    // Filter functions
+    window.filterFeed = (category) => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      currentFilter = category;
+      
+      if (category === 'all') {
+        displayNews(allNews);
+      } else {
+        socket.emit('filter-news', { category: category });
       }
+    };
+
+    window.filterByRegion = (region) => {
+      currentRegion = region;
+      if (region === 'all') {
+        displayNews(allNews);
+      } else {
+        socket.emit('filter-news', { region: region });
+      }
+    };
+
+    // Utility functions
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('clock').textContent = now.toUTCString().slice(17, 25) + ' UTC';
     }
 
-    // Other functions
-    window.toggleAlerts = function() {
-      alert('Alert settings toggled');
-    }
-
-    window.refreshFeed = function() {
-      location.reload();
-    }
-
-    window.zoomMap = function(direction) {
-      console.log('Zoom:', direction);
-    }
-
-    window.resetMap = function() {
-      console.log('Map reset');
-    }
-
-    window.showZoneInfo = function(zone) {
-      alert(`Zone info: ${zone}`);
-    }
-
-    window.acknowledgeAlert = function(alertId) {
-      socket.emit('acknowledge-alert', alertId);
-      // Visual feedback
-      const alertElement = event.currentTarget;
-      alertElement.style.opacity = '0.5';
-    }
-
-    window.showArticleDetail = function(url) {
-      window.open(url, '_blank');
-    }
-
-    window.exportData = function() {
+    window.exportData = () => {
       window.open('/api/export/csv/news', '_blank');
-    }
+    };
 
-    window.shareReport = function() {
+    window.search = () => {
+      alert('Search feature - Enter keywords to filter');
+    };
+
+    window.settings = () => {
+      alert('Settings - Configure your dashboard');
+    };
+
+    window.share = () => {
       if (navigator.share) {
         navigator.share({
-          title: 'WARWATCH Report',
-          text: 'Current conflict situation report',
+          title: 'WARWATCH Dashboard',
+          text: 'Real-time conflict intelligence',
           url: window.location.href
         });
       }
-    }
+    };
 
-    window.bookmarkPage = function() {
-      alert('Press Ctrl+D to bookmark');
-    }
+    window.refresh = () => {
+      location.reload();
+    };
 
-    window.printReport = function() {
-      window.print();
-    }
-
-    window.fullscreen = function() {
-      if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen();
-      }
-    }
-
-    window.saveSettings = function() {
-      const settings = {
-        darkMode: document.getElementById('darkMode').checked,
-        soundAlerts: document.getElementById('soundAlerts').checked,
-        autoRefresh: document.getElementById('autoRefresh').checked,
-        refreshInterval: document.getElementById('refreshInterval').value,
-        defaultView: document.getElementById('defaultView').value
-      };
-      
-      localStorage.setItem('warwatch-settings', JSON.stringify(settings));
-      closeModal();
-      alert('Settings saved!');
-    }
-
-    // Load saved settings
-    function loadSettings() {
-      const saved = localStorage.getItem('warwatch-settings');
-      if (saved) {
-        const settings = JSON.parse(saved);
-        document.getElementById('darkMode').checked = settings.darkMode;
-        document.getElementById('soundAlerts').checked = settings.soundAlerts;
-        document.getElementById('autoRefresh').checked = settings.autoRefresh;
-        document.getElementById('refreshInterval').value = settings.refreshInterval;
-        document.getElementById('defaultView').value = settings.defaultView;
-      }
-    }
-
-    // Clock update
-    function updateClock() {
-      const now = new Date();
-      const h = String(now.getUTCHours()).padStart(2,'0');
-      const m = String(now.getUTCMinutes()).padStart(2,'0');
-      const s = String(now.getUTCSeconds()).padStart(2,'0');
-      document.getElementById('clock').textContent = `UTC ${h}:${m}:${s}`;
-    }
-    
-    setInterval(updateClock, 1000);
-
-    // Connection status
-    socket.on('connect', () => {
-      console.log('Connected to server');
-      showNotification('Connected to server', 'success');
-    });
-
-    socket.on('disconnect', () => {
-      console.log('Disconnected from server');
-      showNotification('Disconnected from server', 'error');
-    });
-
-    function showNotification(message, type) {
-      const notification = document.createElement('div');
-      notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-xl text-white z-[2000] animate-fade-in ${type === 'error' ? 'bg-red-500' : 'bg-green-500'}`;
-      notification.textContent = message;
-      document.body.appendChild(notification);
-      setTimeout(() => notification.remove(), 3000);
-    }
+    window.showQuickMenu = () => {
+      alert('Quick Menu:\n• Export Data\n• Change Theme\n• Alert Settings');
+    };
 
     // Initialize
-    loadSettings();
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Region coordinates for map
+    const regionCoordinates = {
+      'Eastern Europe': { top: '32%', left: '55%' },
+      'Middle East': { top: '48%', left: '63%' },
+      'North Africa': { top: '58%', left: '52%' },
+      'South Asia': { top: '42%', left: '74%' },
+      'Sahel Region': { top: '62%', left: '42%' }
+    };
   </script>
 </body>
 </html>
